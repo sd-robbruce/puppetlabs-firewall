@@ -58,6 +58,7 @@ Puppet::Type.newtype(:firewall) do
   feature :mask, "Ability to match recent rules based on the ipv4 mask"
   feature :ipset, "Match against specified ipset list"
   feature :clusterip, "Configure a simple cluster of nodes that share a certain IP and MAC address without an explicit load balancer in front of them."
+  feature :hashlimit, "Uses hash buckets to express a rate limiting match for a group of connections using a single iptables rule."
 
   # provider specific features
   feature :iptables, "The provider provides iptables features."
@@ -1342,6 +1343,29 @@ Puppet::Type.newtype(:firewall) do
     EOS
   end
 
+  newproperty(:hashlimit_name, :required_features => :hash_limiting) do
+    desc <<-EOS
+      The hash table name
+    EOS
+
+    newvalue(/^[a-z]+$/i)
+  end
+
+  newproperty(:hashlimit_upto, :required_features => :hash_limiting) do
+    desc <<-EOS
+      Match if the rate is below or equal to amount/quantum
+    EOS
+
+    newvalue(/^[1-9]\d*((k|m|g)?b)?\/(second|minute|hour|day)$/)
+  end
+
+  newproperty(:hashlimit_above, :required_features => :hash_limiting) do
+    desc <<-EOS
+      Match if the rate is above amount/quantum
+    EOS
+
+    newvalue(/^[1-9]\d*((k|m|g)?b)?\/(second|minute|hour|day)$/)
+  end
 
   autorequire(:firewallchain) do
     reqs = []
@@ -1534,5 +1558,14 @@ Puppet::Type.newtype(:firewall) do
       end
     end
 
+    [:hashlimit_upto, :hashlimit_above].each do |param|
+      if value(param) && ! value(:hashlimit_name)
+        self.fail "Parameter '#{param.to_s}' requires 'hashlimit_name' to be set"
+      end
+    end
+
+    if value(:hashlimit_upto) && value(:hashlimit_above)
+      self.fail "Parameter 'hashlimit_upto' cannot be used in conjunction with 'hashlimit_above'"
+    end
   end
 end

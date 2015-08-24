@@ -10,6 +10,7 @@ Puppet::Type.type(:firewall).provide :iptables, :parent => Puppet::Provider::Fir
   has_feature :connection_limiting
   has_feature :rate_limiting
   has_feature :recent_limiting
+  has_feature :hash_limiting
   has_feature :snat
   has_feature :dnat
   has_feature :netmap
@@ -65,6 +66,9 @@ Puppet::Type.type(:firewall).provide :iptables, :parent => Puppet::Provider::Fir
     :dst_type              => "--dst-type",
     :gateway               => "--gateway",
     :gid                   => "--gid-owner",
+    :hashlimit_name        => "--hashlimit-name",
+    :hashlimit_upto        => "--hashlimit-upto",
+    :hashlimit_above       => "--hashlimit-above",
     :icmp                  => "-m icmp --icmp-type",
     :iniface               => "-i",
     :ipsec_dir             => "-m policy --dir",
@@ -169,7 +173,8 @@ Puppet::Type.type(:firewall).provide :iptables, :parent => Puppet::Provider::Fir
     :addrtype  => [:src_type, :dst_type],
     :iprange   => [:src_range, :dst_range],
     :owner     => [:uid, :gid],
-    :time      => [:time_start, :time_stop, :month_days, :week_days, :date_start, :date_stop, :time_contiguous, :kernel_timezone]
+    :time      => [:time_start, :time_stop, :month_days, :week_days, :date_start, :date_stop, :time_contiguous, :kernel_timezone],
+    :hashlimit => [:hashlimit_name, :hashlimit_above, :hashlimit_upto]
   }
 
   def self.munge_resource_map_from_existing_values(resource_map_original, compare)
@@ -254,6 +259,7 @@ Puppet::Type.type(:firewall).provide :iptables, :parent => Puppet::Provider::Fir
     :state, :ctstate, :icmp, :limit, :burst, :recent, :rseconds, :reap,
     :rhitcount, :rttl, :rname, :mask, :rsource, :rdest, :ipset, :jump, :clusterip_new, :clusterip_hashmode,
     :clusterip_clustermac, :clusterip_total_nodes, :clusterip_local_node, :clusterip_hash_init,
+    :hashlimit_name, :hashlimit_above, :hashlimit_upto,
     :clamp_mss_to_pmtu, :gateway, :set_mss, :set_dscp, :set_dscp_class, :todest, :tosource, :toports, :to, :checksum_fill, :random, :log_prefix,
     :log_level, :reject, :set_mark, :match_mark, :mss, :connlimit_above, :connlimit_mask, :connmark, :time_start, :time_stop,
     :month_days, :week_days, :date_start, :date_stop, :time_contiguous, :kernel_timezone
